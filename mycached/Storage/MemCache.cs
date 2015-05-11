@@ -30,7 +30,7 @@ namespace mycached.Storage
 
         public CacheStatus Get(string key, out string value, out UInt32 flags)
         {
-            int tableSlot = key.GetHashCode() % Configuration.CacheTableSize;
+            uint tableSlot = ((uint)key.GetHashCode()) % Configuration.CacheTableSize;
             CacheStatus status = CacheStatus.NoError;
 
             lock (this.cacheTable[tableSlot])
@@ -53,10 +53,12 @@ namespace mycached.Storage
             return status;
         }
 
-        public CacheStatus Set(string key, string value, UInt32 flags, UInt32 expiry, UInt64 cas)
+        public CacheStatus Set(string key, string value, UInt32 flags, UInt32 expiry, UInt64 cas, out UInt64 newCas)
         {
-            int tableSlot = key.GetHashCode() % Configuration.CacheTableSize;
+            uint tableSlot = ((uint)key.GetHashCode()) % Configuration.CacheTableSize;
             CacheStatus status = CacheStatus.NoError;
+            
+            newCas = 0;
 
             lock (this.cacheTable[tableSlot])
             {
@@ -73,7 +75,7 @@ namespace mycached.Storage
                     record.Value = value;
                     record.Flags = flags;
                     record.Expiry = expiry;
-                    record.CAS = cas;
+                    record.CAS++;
                 }
                 else
                 {

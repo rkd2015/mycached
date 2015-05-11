@@ -50,8 +50,9 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="MyCachedTests.cs" />
+    <Compile Include="ProtocolTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServerE2eTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\mycached\mycached.csproj">

@@ -19,14 +19,18 @@ namespace mycached
         private Dictionary<IPEndPoint, TcpConnection> clientConnections;
         private MemCache cache;
         private ManualResetEvent exitEvent;
+        private Queue<byte[]> queuedResponses;
 
         public MyCached()
         {
-            this.listener = new TcpListener(IPAddress.IPv6Any, Configuration.ListenPort);
+
+            this.listener = new TcpListener(IPAddress.Any, Configuration.ListenPort);
             this.clientConnections = new Dictionary<IPEndPoint, TcpConnection>();
+            this.cache = new MemCache();
+            this.queuedResponses = new Queue<byte[]>();
         }
 
-        public void Run()
+        public void Run(bool shouldBlock = true)
         {
             this.listener.Start();
 
@@ -35,7 +39,10 @@ namespace mycached
                                             this);
             this.exitEvent = new ManualResetEvent(false);
 
-            exitEvent.WaitOne();
+            if (shouldBlock)
+            {
+                exitEvent.WaitOne();
+            }
         }
 
         public void Stop()
@@ -50,18 +57,99 @@ namespace mycached
             this.exitEvent.Set();
         }
 
-        private void OnPacketsReceived(Queue<ProtocolPacket> packets)
+        public void OnPacketsReceived(object sender, Queue<ProtocolPacket> packets)
         {
-            foreach(ProtocolPacket packet in packets)
+            TcpConnection connection = (TcpConnection)sender;
+
+            while(packets.Count != 0)
             {
+                ProtocolPacket packet = packets.Dequeue();
+
                 if (packet is GetRequest)
                 {
                     GetRequest getRequest = packet as GetRequest;
+                    String value = String.Empty;
+                    uint flags = 0;
 
+                    CacheStatus status = this.cache.Get(getRequest.Key, out value, out flags);
+                    ResponseStatus responseStatus = ResponseStatus.NoError;
+                    switch(status)
+                    {
+                        case CacheStatus.KeyDoesNotExist:
+                            responseStatus = ResponseStatus.KeyNotFound;
+                            break;
+                    }
+
+                    GetResponse getResponse = new GetResponse(responseStatus);
+
+                    if (getRequest.Header.OpCode == CommandOpCode.GetK ||
+                        getRequest.Header.OpCode == CommandOpCode.GetKQ)
+                    {
+                        getResponse.Key = getRequest.Key;
+                    }
+
+                    getResponse.Value = value;
+                    getResponse.Header.Extras = new CommandExtras(4);
+                    getResponse.Header.Extras.Flags = flags;
+
+                    byte[] responsePacket = getResponse.Serialize();
+
+                    if (getRequest.Header.OpCode == CommandOpCode.GetQ ||
+                        getRequest.Header.OpCode == CommandOpCode.GetKQ)
+                    {
+                        this.queuedResponses.Enqueue(responsePacket);
+                    }
+                    else
+                    {
+                        while(this.queuedResponses.Count != 0)
+                        {
+                            byte[] queuedPacket = this.queuedResponses.Dequeue();
+                            connection.SendResponse(queuedPacket, 0, queuedPacket.Length);
+                        }
+
+                        connection.SendResponse(responsePacket, 0, responsePacket.Length);
+                    }
                 }
                 else if (packet is SetRequest)
                 {
                     SetRequest setRequest = packet as SetRequest;
+                    UInt32 flags = (setRequest.Header.Extras != null) ? setRequest.Header.Extras.Flags : 0;
+                    UInt32 expiry = (setRequest.Header.Extras != null) ? setRequest.Header.Extras.Expiry : 0;
+                    UInt64 newCas = 0;
+
+                    CacheStatus status = this.cache.Set(setRequest.Key,
+                                                        setRequest.Value,
+                                                        flags,
+                                                        expiry,
+                                                        setRequest.Header.CAS,
+                                                        out newCas);
+
+                    ResponseStatus responseStatus = ResponseStatus.NoError;
+                    switch(status)
+                    {
+                        case CacheStatus.CasDosentMatch:
+                            responseStatus = ResponseStatus.InvalidArguments;
+                            break;
+                    }
+
+                    SetResponse setResponse = new SetResponse(responseStatus);
+                    setRequest.Header.CAS = newCas;
+                    byte[] responsePacket = setResponse.Serialize();
+
+                    if (setRequest.Header.OpCode == CommandOpCode.SetQ)
+                    {
+                        this.queuedResponses.Enqueue(responsePacket);
+                    }
+                    else
+                    {
+                        while (this.queuedResponses.Count != 0)
+                        {
+                            byte[] queuedPacket = this.queuedResponses.Dequeue();
+                            connection.SendResponse(queuedPacket, 0, queuedPacket.Length);
+                        }
+
+                        connection.SendResponse(responsePacket, 0, responsePacket.Length);
+                    }
                 }
             }
         }
@@ -69,15 +157,23 @@ namespace mycached
         static public void OnAcceptTcpClientCallback(IAsyncResult ar)
         {
             MyCached myCached = (MyCached)ar.AsyncState;
-            TcpClient client = myCached.listener.EndAcceptTcpClient(ar);
-            TcpConnection connection = new TcpConnection(client);
 
-            connection.OnPacketsReceived += connection.OnPacketsReceived;
-            myCached.clientConnections.Add((IPEndPoint)client.Client.RemoteEndPoint, connection);
+            try
+            {
+                TcpClient client = myCached.listener.EndAcceptTcpClient(ar);
+                TcpConnection connection = new TcpConnection(client);
 
-            myCached.listener.BeginAcceptTcpClient(
-                                            new AsyncCallback(OnAcceptTcpClientCallback),
-                                            myCached);
+                connection.OnPacketsReceived += myCached.OnPacketsReceived;
+                myCached.clientConnections.Add((IPEndPoint)client.Client.RemoteEndPoint, connection);
+
+                myCached.listener.BeginAcceptTcpClient(
+                                                new AsyncCallback(OnAcceptTcpClientCallback),
+                                                myCached);
+            }
+            catch (Exception e)
+            {
+
+            }
         }
 
     }

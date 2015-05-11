@@ -11,9 +11,7 @@ namespace mycached.Transport
 {
     public class TcpConnection
     {
-        public delegate EventHandler<Queue<ProtocolPacket>> PacketsReceivedHandler(TcpConnection conneciton, Queue<ProtocolPacket> packets);
-        
-        public PacketsReceivedHandler OnPacketsReceived;
+        public event EventHandler<Queue<ProtocolPacket>> OnPacketsReceived;
 
         private TcpClient client;
         private byte[] buffer;
@@ -27,7 +25,11 @@ namespace mycached.Transport
             this.packetizer = new Packetizer();
 
             this.stream = this.client.GetStream();
-            this.stream.BeginRead(this.buffer, 0, this.buffer.Length, new AsyncCallback(OnReadCallback), this);
+            this.stream.BeginRead(this.buffer, 
+                                  0, 
+                                  this.buffer.Length, 
+                                  new AsyncCallback(OnReadCallback), 
+                                  this);
         }
 
         public void Close()
@@ -35,14 +37,40 @@ namespace mycached.Transport
             this.client.Close();
         }
 
+        public void SendResponse(byte[] response, int start, int length)
+        {
+            try
+            {
+                this.stream.BeginWrite(response, start, length, null, null);
+            }
+            catch(Exception e)
+            {
+
+            }
+        }
+
         static public void OnReadCallback(IAsyncResult ar)
         {
             TcpConnection connection = (TcpConnection)ar.AsyncState;
-            int numberOfBytesRead = connection.stream.EndRead(ar);
 
-            connection.packetizer.Push(connection.buffer, 0, numberOfBytesRead);
+            try
+            {
+                int numberOfBytesRead = connection.stream.EndRead(ar);
 
-            connection.OnPacketsReceived(connection, connection.packetizer.Packets);
+                connection.packetizer.Push(connection.buffer, 0, numberOfBytesRead);
+
+                connection.OnPacketsReceived(connection, connection.packetizer.Packets);
+
+                connection.stream.BeginRead(connection.buffer, 
+                                            0, 
+                                            connection.buffer.Length, 
+                                            new AsyncCallback(OnReadCallback), 
+                                            connection);
+            }
+            catch (Exception e)
+            {
+
+            }
         }
     }
 }

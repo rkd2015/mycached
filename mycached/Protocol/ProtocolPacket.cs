@@ -38,6 +38,27 @@ namespace mycached.Protocol
         {
             this.Header = header;
         }
+
+        public byte[] Serialize()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            this.Write(writer);
+
+            writer.Close();
+
+            return stream.ToArray();
+        }
+
+        public static ProtocolPacket Construct(byte[] packet, int start, int length)
+        {
+            MemoryStream stream = new MemoryStream(packet, start, length);
+            BinaryReader reader = new BinaryReader(stream);
+
+            return ProtocolPacket.ReadRequest(reader);
+        }
+
         public static ProtocolPacket ReadRequest(BinaryReader reader)
         {
             return ProtocolPacket.ReadRequest(reader, ProtocolHeader.ReadHeader(reader));
@@ -101,9 +122,38 @@ namespace mycached.Protocol
 
         public void Write(BinaryWriter writer)
         {
+            if (!String.IsNullOrEmpty(this.Key))
+            {
+                this.Header.KeyLength = (ushort)this.Key.Length;
+            }
+
+            if (!String.IsNullOrEmpty(this.Value))
+            {
+                this.Header.TotalBodyLength = (uint)(this.Header.KeyLength + this.Value.Length);
+            }
+            else
+            {
+                this.Header.TotalBodyLength = (uint)this.Header.KeyLength;
+            }
+
+            if (this.Header.Extras != null)
+            {
+                if (this.Header.Extras.Flags != 0)
+                {
+                    this.Header.ExtrasLength = 4;
+                    this.Header.TotalBodyLength += 4;
+                }
+
+                if (this.Header.Extras.Expiry != 0)
+                {
+                    this.Header.ExtrasLength += 4;
+                    this.Header.TotalBodyLength += 4;
+                }
+            }
+
             this.Header.Write(writer);
 
-            if (this.Key.Length != 0)
+            if (!String.IsNullOrEmpty(this.Key))
             {
                 byte[] tempArray = new byte[this.Key.Length];
 
@@ -111,7 +161,7 @@ namespace mycached.Protocol
                 writer.Write(tempArray);
             }
 
-            if (this.Value.Length != 0)
+            if (!String.IsNullOrEmpty(this.Value))
             {
                 byte[] tempArray = new byte[this.Value.Length];
 

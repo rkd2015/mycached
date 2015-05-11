@@ -6,7 +6,7 @@ using System.IO;
 namespace unittests
 {
     [TestClass]
-    public class MyCachedTests
+    public class ProtocolTests
     {
         [TestMethod]
         public void CheckMagicNumber()
@@ -14,13 +14,13 @@ namespace unittests
             GetRequest getRequest = new GetRequest();
             Assert.AreEqual(getRequest.Header.Magic, 0x80);
 
-            GetResponse getResponse = new GetResponse();
+            GetResponse getResponse = new GetResponse(ResponseStatus.NoError);
             Assert.AreEqual(getResponse.Header.Magic, 0x81);
 
             SetRequest setRequest = new SetRequest();
             Assert.AreEqual(setRequest.Header.Magic, 0x80);
 
-            SetResponse setResponse = new SetResponse();
+            SetResponse setResponse = new SetResponse(ResponseStatus.NoError);
             Assert.AreEqual(setResponse.Header.Magic, 0x81);
         }
 

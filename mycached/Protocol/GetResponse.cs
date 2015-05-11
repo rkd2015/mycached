@@ -9,10 +9,12 @@ namespace mycached.Protocol
 {
     public class GetResponse : ProtocolPacket
     {
-        public GetResponse()
+        public GetResponse(ResponseStatus status)
         {
             this.Header = new ProtocolHeader();
             this.Header.Magic = ProtocolPacket.ResponseMagic;
+            this.Header.OpCode = CommandOpCode.Get;
+            this.Header.Status = status;
         }
 
         public GetResponse(ProtocolHeader header)

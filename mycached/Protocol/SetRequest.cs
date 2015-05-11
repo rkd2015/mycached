@@ -9,10 +9,11 @@ namespace mycached.Protocol
 {
     public class SetRequest : ProtocolPacket
     {
-        public SetRequest()
+        public SetRequest(CommandOpCode opCode = CommandOpCode.Set)
         {
             this.Header = new ProtocolHeader();
             this.Header.Magic = ProtocolPacket.RequestMagic;
+            this.Header.OpCode = opCode;
         }
 
         public SetRequest(ProtocolHeader header)
