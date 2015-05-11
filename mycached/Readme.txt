@@ -27,5 +27,5 @@ Improvements
 - Better socket implementation
 	- epoll/IOCP
 - Memory allocation
-- Batching support
+	For the 
 - 
