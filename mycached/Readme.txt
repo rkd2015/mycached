@@ -1,5 +1,13 @@
 ﻿Design
 ------
+Concerns
+	Server
+		1) 
+	Transport
+
+	Protocol
+
+	Storage
 
 Performance considerations
 

@@ -17,7 +17,7 @@ namespace mycached.Transport
         public Packetizer()
         {
             this.Packets = new Queue<ProtocolPacket>();
-            this.workingBuffer = new byte[2048];
+            this.workingBuffer = new byte[8192];
         }
 
         public void Push(byte[] data, int start, int length)

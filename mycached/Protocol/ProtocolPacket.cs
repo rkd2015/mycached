@@ -138,7 +138,7 @@ namespace mycached.Protocol
 
             if (this.Header.Extras != null)
             {
-                if (this.Header.Extras.Flags != 0)
+                if (this.Header.Extras.Flags != 0 || this.Header.Extras.ExtrasLength != 0)
                 {
                     this.Header.ExtrasLength = 4;
                     this.Header.TotalBodyLength += 4;

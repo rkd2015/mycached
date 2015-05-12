@@ -70,7 +70,7 @@ namespace mycached.Storage
                     this.cacheTable[tableSlot] [key] = record;
                 }
 
-                if (cas == record.CAS)
+                if (cas == 0 || cas == record.CAS)
                 {
                     record.Value = value;
                     record.Flags = flags;

@@ -1,6 +1,7 @@
 ﻿using mycached.Protocol;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -45,7 +46,7 @@ namespace mycached.Transport
             }
             catch(Exception e)
             {
-
+                Trace.TraceError("SendResponse: Caught error {0}", e.ToString());
             }
         }
 
@@ -69,7 +70,7 @@ namespace mycached.Transport
             }
             catch (Exception e)
             {
-
+                Trace.TraceError("SendResponse: Caught error {0}", e.ToString());
             }
         }
     }

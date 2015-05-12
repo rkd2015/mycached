@@ -107,6 +107,7 @@ namespace mycached
             getResponse.Value = value;
             getResponse.Header.Extras = new CommandExtras(4);
             getResponse.Header.Extras.Flags = flags;
+            getResponse.Header.Opaque = getRequest.Header.Opaque;
 
             byte[] responsePacket = getResponse.Serialize();
 
@@ -152,6 +153,8 @@ namespace mycached
 
             SetResponse setResponse = new SetResponse(responseStatus);
             setRequest.Header.CAS = newCas;
+            setResponse.Header.Opaque = setRequest.Header.Opaque;
+
             byte[] responsePacket = setResponse.Serialize();
 
             if (setRequest.Header.OpCode == CommandOpCode.SetQ)

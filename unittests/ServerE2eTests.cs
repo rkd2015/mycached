@@ -40,5 +40,57 @@ namespace unittests
 
             Assert.AreEqual("World", value);
         }
+
+        [TestMethod]
+        public async Task MultiSetAndGet()
+        {
+            MyCacheClient client = new MyCacheClient();
+
+            await client.Connect();
+
+            ResponseStatus status = await client.Set("1", "One");
+            Assert.AreEqual(ResponseStatus.NoError, status);
+
+            status = await client.Set("2", "Two");
+            Assert.AreEqual(ResponseStatus.NoError, status);
+
+            status = await client.Set("3", "Three");
+            Assert.AreEqual(ResponseStatus.NoError, status);
+
+            String value = await client.Get("1");
+            Assert.AreEqual("One", value);
+
+            value = await client.Get("2");
+            Assert.AreEqual("Two", value);
+
+            value = await client.Get("3");
+            Assert.AreEqual("Three", value);
+        }
+
+        [TestMethod]
+        public async Task QueuedMultiSetAndGet()
+        {
+            MyCacheClient client = new MyCacheClient();
+
+            await client.Connect();
+
+            ResponseStatus status = await client.Set("1", "One");
+            Assert.AreEqual(ResponseStatus.NoError, status);
+
+            status = await client.Set("2", "Two");
+            Assert.AreEqual(ResponseStatus.NoError, status);
+
+            status = await client.Set("3", "Three");
+            Assert.AreEqual(ResponseStatus.NoError, status);
+
+            String value = await client.Get("1");
+            Assert.AreEqual("One", value);
+
+            value = await client.Get("2");
+            Assert.AreEqual("Two", value);
+
+            value = await client.Get("3");
+            Assert.AreEqual("Three", value);
+        }
     }
 }
