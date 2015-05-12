@@ -57,5 +57,13 @@ namespace mycached.Utilities
             writer.Write((Byte)((value >> 8) & 0xFF));
             writer.Write((Byte)(value & 0xFF));
         }
+
+        public static byte[] Combine(byte[] first, byte[] second)
+        {
+            byte[] ret = new byte[first.Length + second.Length];
+            Buffer.BlockCopy(first, 0, ret, 0, first.Length);
+            Buffer.BlockCopy(second, 0, ret, first.Length, second.Length);
+            return ret;
+        }
     }
 }

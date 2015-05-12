@@ -58,15 +58,18 @@ namespace mycached.Transport
             {
                 int numberOfBytesRead = connection.stream.EndRead(ar);
 
-                connection.packetizer.Push(connection.buffer, 0, numberOfBytesRead);
+                if (numberOfBytesRead != 0)
+                {
+                    connection.packetizer.Push(connection.buffer, 0, numberOfBytesRead);
 
-                connection.OnPacketsReceived(connection, connection.packetizer.Packets);
+                    connection.OnPacketsReceived(connection, connection.packetizer.Packets);
 
-                connection.stream.BeginRead(connection.buffer, 
-                                            0, 
-                                            connection.buffer.Length, 
-                                            new AsyncCallback(OnReadCallback), 
-                                            connection);
+                    connection.stream.BeginRead(connection.buffer,
+                                                0,
+                                                connection.buffer.Length,
+                                                new AsyncCallback(OnReadCallback),
+                                                connection);
+                }
             }
             catch (Exception e)
             {
