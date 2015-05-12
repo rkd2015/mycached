@@ -41,12 +41,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MyCached.cs" />
+    <Compile Include="Server\MyCached.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocol\CommandExtras.cs" />
     <Compile Include="Protocol\CommandOpCode.cs" />
-    <Compile Include="Protocol\ErrorResponse.cs" />
     <Compile Include="Protocol\GetRequest.cs" />
     <Compile Include="Protocol\GetResponse.cs" />
     <Compile Include="Protocol\ProtocolException.cs" />

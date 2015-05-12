@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 
 namespace mycached
 {
+    /// <summary>
+    /// MyCache daemon class. Holds the listener and cache.
+    /// </summary>
     public class MyCached
     {
         private TcpListener listener;
@@ -31,6 +34,10 @@ namespace mycached
             this.queuedResponses = new Queue<byte[]>();
         }
 
+        /// <summary>
+        /// Run an dblock if necessary.
+        /// </summary>
+        /// <param name="shouldBlock">block if true</param>
         public void Run(bool shouldBlock = true)
         {
             Trace.TraceInformation("Listening on port {0}", Configuration.ListenPort);
@@ -47,18 +54,29 @@ namespace mycached
             }
         }
 
+        /// <summary>
+        /// Stop the daemon
+        /// </summary>
         public void Stop()
         {
             this.listener.Stop();
 
-            foreach (KeyValuePair<IPEndPoint, TcpConnection> pair in this.clientConnections)
+            lock (this.clientConnections)
             {
-                pair.Value.Close();
+                foreach (KeyValuePair<IPEndPoint, TcpConnection> pair in this.clientConnections)
+                {
+                    pair.Value.Close();
+                }
             }
 
             this.exitEvent.Set();
         }
 
+        /// <summary>
+        /// Handle deserialized packets
+        /// </summary>
+        /// <param name="sender">the tcp connection taht received the packet</param>
+        /// <param name="packets">packet queue(queue will preserve order)</param>
         public void OnPacketsReceived(object sender, Queue<ProtocolPacket> packets)
         {
             TcpConnection connection = (TcpConnection)sender;
@@ -82,6 +100,11 @@ namespace mycached
             }
         }
 
+        /// <summary>
+        /// Handle a get request. Lookup cache and return response
+        /// </summary>
+        /// <param name="getRequest">GET request</param>
+        /// <param name="connection">TcpConnection</param>
         private void HandleGet(GetRequest getRequest, TcpConnection connection)
         {
             String value = String.Empty;
@@ -130,6 +153,11 @@ namespace mycached
             }
         }
 
+        /// <summary>
+        /// Handle a set request. Modify the record for the given key
+        /// </summary>
+        /// <param name="setRequest">SET request</param>
+        /// <param name="connection">Tcp Connection</param>
         private void HandleSet(SetRequest setRequest, TcpConnection connection)
         {
             UInt32 flags = (setRequest.Header.Extras != null) ? setRequest.Header.Extras.Flags : 0;
@@ -175,6 +203,10 @@ namespace mycached
             }
         }
 
+        /// <summary>
+        /// Accept a incoming TCP conneciton
+        /// </summary>
+        /// <param name="ar">async result</param>
         static public void OnAcceptTcpClientCallback(IAsyncResult ar)
         {
             MyCached myCached = (MyCached)ar.AsyncState;
@@ -188,7 +220,11 @@ namespace mycached
                 TcpConnection connection = new TcpConnection(client);
 
                 connection.OnPacketsReceived += myCached.OnPacketsReceived;
-                myCached.clientConnections.Add((IPEndPoint)client.Client.RemoteEndPoint, connection);
+
+                lock (myCached.clientConnections)
+                {
+                    myCached.clientConnections.Add((IPEndPoint)client.Client.RemoteEndPoint, connection);
+                }
 
                 myCached.listener.BeginAcceptTcpClient(
                                                 new AsyncCallback(OnAcceptTcpClientCallback),

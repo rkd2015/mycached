@@ -14,6 +14,11 @@ namespace mycached.Storage
         CasDosentMatch
     }
 
+    /// <summary>
+    /// Encapsulates the cache. The cache is a table of hash tables. The first level table
+    /// serves as a striping unit. The inner level is a dictionary. The lock is at the 
+    /// dictionary level.
+    /// </summary>
     public class MemCache
     {
         private Dictionary<string, CacheRecord>[] cacheTable;

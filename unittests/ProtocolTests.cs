@@ -27,69 +27,6 @@ namespace unittests
         /// <summary>
         ///  |0 1 2 3 4 5 6 7|0 1 2 3 4 5 6 7|0 1 2 3 4 5 6 7|0 1 2 3 4 5 6 7|
         ///  +---------------+---------------+---------------+---------------+
-        /// 0| 0x81          | 0x00          | 0x00          | 0x00          |
-        ///  +---------------+---------------+---------------+---------------+
-        /// 4| 0x00          | 0x00          | 0x00          | 0x01          |
-        ///  +---------------+---------------+---------------+---------------+
-        /// 8| 0x00          | 0x00          | 0x00          | 0x09          |
-        ///  +---------------+---------------+---------------+---------------+
-        ///12| 0x00          | 0x00          | 0x00          | 0x00          |
-        ///  +---------------+---------------+---------------+---------------+
-        ///16| 0x00          | 0x00          | 0x00          | 0x00          |
-        ///  +---------------+---------------+---------------+---------------+
-        ///20| 0x00          | 0x00          | 0x00          | 0x00          |
-        ///  +---------------+---------------+---------------+---------------+
-        ///24| 0x4e ('N')    | 0x6f ('o')    | 0x74 ('t')    | 0x20 (' ')    |
-        ///  +---------------+---------------+---------------+---------------+
-        ///28| 0x66 ('f')    | 0x6f ('o')    | 0x75 ('u')    | 0x6e ('n')    |
-        ///  +---------------+---------------+---------------+---------------+
-        ///32| 0x64 ('d')    |
-        ///  +---------------+
-        ///  Total 33 bytes (24 byte header, and 9 bytes value)
-        /// </summary>
-        //[TestMethod]
-        public void ErrorResponseSerialization()
-        {
-            MemoryStream stream = new MemoryStream();
-
-            BinaryWriter writer = new BinaryWriter(stream);
-            Byte[] packet = {   
-                                0x81, 0x00, 0x00, 0x00, 
-                                0x00, 0x00, 0x00, 0x01,
-                                0x00, 0x00, 0x00, 0x09,
-                                0x00, 0x00, 0x00, 0x00,
-                                0x00, 0x00, 0x00, 0x00,
-                                0x00, 0x00, 0x00, 0x00,
-                                0x4e, 0x6f, 0x74, 0x20,
-                                0x66, 0x6f, 0x75, 0x6e,
-                                0x64
-                            };
-            writer.Write(packet);
-
-            stream.Seek(0, SeekOrigin.Begin);
-
-            using (BinaryReader reader = new BinaryReader(stream))
-            {
-                ErrorResponse response = (ErrorResponse)ProtocolPacket.ReadRequest(reader);
-
-                Assert.AreEqual(response.Header.Magic, 0x81);
-                Assert.AreEqual(response.Header.OpCode, CommandOpCode.Get);
-                Assert.AreEqual(response.Header.KeyLength, 9);
-                Assert.AreEqual(response.Header.ExtrasLength, 0);
-                Assert.AreEqual(response.Header.DataType, 0);
-                Assert.AreEqual(response.Header.Status, ResponseStatus.NoError);
-                Assert.AreEqual(response.Header.TotalBodyLength, (uint)5);
-                Assert.AreEqual(response.Header.Opaque, (uint)0);
-                Assert.AreEqual(response.Header.CAS, (ulong)0);
-                Assert.IsNull(response.Header.Extras);
-                Assert.AreEqual(response.Key, "Not Found");
-                Assert.IsTrue(String.IsNullOrEmpty(response.Value));
-            }
-        }
-
-        /// <summary>
-        ///  |0 1 2 3 4 5 6 7|0 1 2 3 4 5 6 7|0 1 2 3 4 5 6 7|0 1 2 3 4 5 6 7|
-        ///  +---------------+---------------+---------------+---------------+
         /// 0| 0x80          | 0x00          | 0x00          | 0x05          |
         ///  +---------------+---------------+---------------+---------------+
         /// 4| 0x00          | 0x00          | 0x00          | 0x00          |

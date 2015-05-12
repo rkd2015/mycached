@@ -23,6 +23,14 @@ namespace mycached.Transport
             this.pendingByteCount = 0;
         }
 
+        /// <summary>
+        /// This method will perform the packet framing. Each time we receive data on the
+        /// socket, we peel off packets fro mit and remember the remaining data. This handles
+        /// partial packets including partial headers.
+        /// </summary>
+        /// <param name="data">data received on the socket</param>
+        /// <param name="start">start</param>
+        /// <param name="length">number of bytes</param>
         public void Push(byte[] data, int start, int length)
         {
             // If we have pending data, append the new data to it.
@@ -84,24 +92,6 @@ namespace mycached.Transport
                         this.pendingByteCount = remainingBytes;
                         this.pendingHeader = null;
                     }
-                }
-            }
-        }
-
-        public void PushFullPacket(byte[] data, int start, int length)
-        {
-            using (MemoryStream memoryStream = new MemoryStream(data, start, length))
-            {
-                using (BinaryReader reader = new BinaryReader(memoryStream))
-                {
-
-                    ProtocolHeader header = new ProtocolHeader();
-
-                    header.Read(reader);
-
-                    ProtocolPacket packet = ProtocolPacket.ReadRequest(reader, header);
-
-                    this.Packets.Enqueue(packet);
                 }
             }
         }

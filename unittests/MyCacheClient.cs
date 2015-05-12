@@ -28,9 +28,9 @@ namespace mycached
             this.stream = this.client.GetStream();
         }
 
-        public async Task<string> Get(String key)
+        public async Task<string> Get(String key, CommandOpCode opCode = CommandOpCode.Get)
         {
-            GetRequest getRequest = new GetRequest();
+            GetRequest getRequest = new GetRequest(opCode);
 
             getRequest.Key = key;
 
@@ -46,9 +46,9 @@ namespace mycached
             return getResponse.Value;
         }
 
-        public async Task<ResponseStatus> Set(String key, String value)
+        public async Task<ResponseStatus> Set(String key, String value, CommandOpCode opCode = CommandOpCode.Set)
         {
-            SetRequest setRequest = new SetRequest();
+            SetRequest setRequest = new SetRequest(opCode);
 
             setRequest.Key = key;
             setRequest.Value = value;
